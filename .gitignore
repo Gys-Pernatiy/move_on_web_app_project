@@ -1,0 +1,251 @@
+# Python-specific ignores
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.swp
+*.swo
+*.idea/
+
+# Environment files
+.env
+.venv/
+venv/
+env/
+
+# Django-specific ignores
+db.sqlite3
+*.log
+/staticfiles/
+*.pyc
+*.pyo
+*.pyd
+*.db
+
+# Node.js / JavaScript tools (если будете использовать для фронта)
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn.lock
+
+# Docker-related ignores
+docker-compose.override.yml
+*.pid
+
+# Ignore IDE settings
+.idea/
+.vscode/
+
+# Ignore migrations cache
+
+# Ignore compiled stylesheets (если будете использовать SCSS/SASS)
+*.sass-cache
+*.scssc
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*.orig
+*.out
+*.lock
+
+# Coverage reports
+htmlcov/
+.tox/
+.coverage
+coverage.xml
+*.cover
+.cache
+.pytest_cache/
+
+# Ignore debug and test files
+test_*.py
+test-results.xml
+
+# Ignore personal files
+*.DS_Store
+Thumbs.db
+# .gitignore for Python projects
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# PyCharm
+.idea/
+
+# VSCode
+.vscode/
+
+# MyPy
+.mypy_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# VSCode
+.vscode/
+
+# Coverage reports
+.coverage
+.coverage.*
+*.cover
+*.hypothesis/
+
+# Sphinx documentation
+docs/_build/
+
+# PyInstaller
+*.spec
+# .gitignore for Django projects
+
+# Django specific files
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# .env files
+.env
+
+# Docker related
+docker-compose.yml
+*.dockerfile
+.docker/
+
+# VSCode or PyCharm
+.idea/
+.vscode/
+
+# Django migrations folder
+
+# Celery logs
+celerybeat-schedule
+celery.log
+
+# PostgreSQL
+*.psql
+# .gitignore for Aiogram projects
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# PyCharm
+.idea/
+
+# VSCode
+.vscode/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Log files
+*.log
+
+# Telegram bot specific
+*.sqlite3
+*.env
+
+# Coverage reports
+.coverage
+.coverage.*
+*.cover
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+# .gitignore for Django and Aiogram (Python) projects
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+ENV/
+env/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# .env files
+.env
+
+# Docker related
+docker-compose.yml
+*.dockerfile
+.docker/
+
+# Celery logs
+celerybeat-schedule
+celery.log
+
+# IDEs
+.idea/
+.vscode/
+
+# Coverage
+.coverage
+.coverage.*
+*.cover
+*.hypothesis/
+
+# Sphinx documentation
+docs/_build/
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# PostgreSQL
+*.psql
+/bot/
+/backend.zip
+/записки.txt
+/backend/move_on/templates/progress.html
+/backend/move_on/templates/save_index_react.html
+/backend/move_on/templates/webapp_test.html
+/backend/move_on/static/assets/
+/backend/move_on/static/js/
+/backend/move_on/static/react-app/
+/backend/move_on/static/index.html
+/backend/move_on/static/last save.js
+/backend/move_on/static/save2.js
+/backend/move_on/static/save.js
+/backend/move_on/static/vite.svg
+/backend/move_on/static/react-app/
+/backend/move_on/migrations/0001_initial.py
+/backend/move_on/migrations/0002_anomalylog_walksession.py
