@@ -1,4 +1,7 @@
 import random
+from scipy.signal import butter, filtfilt, find_peaks
+from haversine import haversine, Unit
+import numpy as np
 
 
 def calculate_reward(distance, steps, avg_speed, user):
@@ -37,3 +40,27 @@ def calculate_reward(distance, steps, avg_speed, user):
         total_reward *= random.choice([1.5, 2])  # Умножаем на x1.5 или x2
 
     return round(total_reward, 2)
+
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    return haversine((lat1, lon1), (lat2, lon2), unit=Unit.METERS)
+
+# Фильтр скользящего среднего нашёл на аутсорсе
+def moving_average(data, window_size=5):
+    if len(data) < window_size:
+        return []
+    return [sum(data[i:i+window_size]) / window_size for i in range(len(data) - window_size + 1)]
+
+
+def butter_lowpass_filter(data, cutoff=3.0, fs=50.0, order=4):
+    nyquist = 0.5 * fs
+    normal_cutoff = cutoff / nyquist
+    b, a = butter(order, normal_cutoff, btype='low', analog=False)
+    return filtfilt(b, a, data)
+
+
+def detect_steps(data, min_freq=0.5, max_freq=3.0, sampling_rate=50):
+    threshold = np.std(data) * 1.5
+    min_distance = int(sampling_rate / max_freq)
+    peaks, _ = find_peaks(data, height=threshold, distance=min_distance)
+    return len(peaks)

@@ -53,15 +53,19 @@ class WalkSessionSerializer(serializers.ModelSerializer):
 
 
 class TaskSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField()
-
     class Meta:
         model = Task
         fields = [
-            'id', 'user', 'name', 'description', 'is_completed',
-            'reward', 'created_at'
+            'id',
+            'name',
+            'description',
+            'reward',
+            'difficulty',
+            'task_type',
+            'start_date',
+            'end_date',
+            'is_active',
         ]
-        read_only_fields = ['created_at']
 
 
 class StatisticsSerializer(serializers.ModelSerializer):
@@ -101,3 +105,8 @@ class AnomalyLogSerializer(serializers.ModelSerializer):
         model = AnomalyLog
         fields = ['id', 'user', 'description', 'created_at']
         read_only_fields = ['created_at']
+
+
+class CompleteTaskSerializer(serializers.Serializer):
+    task_id = serializers.IntegerField(required=True, help_text="ID задачи для завершения")
+    telegram_id = serializers.IntegerField(required=True, help_text="Telegram ID пользователя")

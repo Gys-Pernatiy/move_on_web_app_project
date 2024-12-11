@@ -19,8 +19,9 @@ from django.urls import path
 from django.views.generic import TemplateView
 from backend import settings
 from django.conf.urls.static import static
-from move_on.views import get_energy, start_walk, update_walk, finish_walk, walk_history, tasks_complete, \
-    get_statistics, track_data, log_js_errors, update_walk_session, end_walk, stop_walk
+from move_on.views import get_energy, tasks_complete, WalkViewSet, get_statistics, log_js_errors, check_unfinished, \
+    main_page, get_tasks, stepometer, claim_daily_bonus, streak_history, global_statistics
+from rest_framework.routers import DefaultRouter
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
@@ -36,32 +37,29 @@ schema_view = get_schema_view(
     public=True,
 )
 
+router = DefaultRouter()
+router.register(r'walks', WalkViewSet, basename='walk')
+
 
 urlpatterns = [
+    path('', main_page, name='main_page'),
     path('admin/', admin.site.urls),
     path('energy/<int:telegram_id>/', get_energy, name='get_energy'),
-    path('walk/start/', start_walk, name='start_walk'),
-    path('walk/update/', update_walk, name='update_walk'),
-    path('walk/finish/', finish_walk, name='finish_walk'),
-    path('walk/history/<int:telegram_id>/', walk_history, name='walk_history'),
-    path('tasks/complete/', tasks_complete, name='tasks_complete'),
+    path('tasks/', get_tasks, name='get_tasks'),
+    path('tasks/<int:task_id>/complete/', tasks_complete, name='tasks_complete'),
+    path('streak/history/<int:telegram_id>/', streak_history, name='streak_history'),
+    path('bonus/claim/<int:telegram_id>/', claim_daily_bonus, name='claim_daily_bonus'),
+    # path('stepometer/', stepometer, name='stepometer'),
     path('statistics/<int:telegram_id>/', get_statistics, name='get_statistics'),
+    path('global-statistics/<int:telegram_id>/', global_statistics, name='global_statistics'),
     path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('docs.<str:format>', schema_view.without_ui(cache_timeout=0), name='schema-formatted'),
-
     path('webapp-test/', TemplateView.as_view(template_name='webapp_test.html')),
-
-    # API для работы с данными сенсоров и прогулками
-    path('api/track-data/', track_data, name='track_data'),
-    # path('api/process-data/', process_sensor_data, name='process_data'),
-    path('api/update-walk-session/', update_walk_session, name='update_walk_session'),
-    path('api/end-walk/', end_walk, name='end_walk'),
-    path('api/stop-walk/', stop_walk, name='stop_walk'),
-    path('api/start-walk/', start_walk, name='start_walk'),
-
-    # Логи для JS
+    path('api/walk/check_unfinished/', check_unfinished, name='check_unfinished'),
     path('log_js_errors/', log_js_errors, name='js_logs_view'),
 ]
+
+urlpatterns += router.urls
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

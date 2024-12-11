@@ -1,3 +1,6 @@
+import uuid
+from datetime import timedelta
+
 from django.db import models
 from django.utils.timezone import now
 
@@ -49,6 +52,8 @@ class User(models.Model):
     first_name = models.CharField(max_length=255, null=True, blank=True)
     last_name = models.CharField(max_length=255, null=True, blank=True)
     energy = models.IntegerField(default=100)
+    max_energy = models.IntegerField(default=100)
+    last_energy_update = models.DateTimeField(auto_now_add=True)
     points = models.FloatField(default=0)
     endurance_level = models.IntegerField(default=0)
     efficiency_level = models.IntegerField(default=0)
@@ -62,13 +67,28 @@ class User(models.Model):
     is_fake = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True, help_text="Статус активности пользователя.")
     ton_wallet = models.CharField(max_length=255, null=True, blank=True)
+    referral_uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, help_text="Уникальный идентификатор для реферальной программы")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"User {self.telegram_id} ({self.username or 'No username'})"
 
+    def update_energy(self):
+        """
+        Обновляет текущую энергию пользователя на основе времени последнего обновления.
+        """
+        now_time = now()
+        elapsed_time = now_time - self.last_energy_update
 
+        if elapsed_time.total_seconds() < 60 * 12:
+            return
+
+        restored_energy = int(elapsed_time.total_seconds() // (60 * 12))
+        if restored_energy > 0:
+            self.energy = min(100, self.energy + restored_energy)
+            self.last_energy_update = now_time
+            self.save()
 
 class Walk(models.Model):
     """
@@ -114,25 +134,64 @@ class Walk(models.Model):
 
 class DailyBonus(models.Model):
     """
-        Модель ежедневного бонуса, отслеживающая прогресс пользователя в ежедневных входах.
-
-        Поля:
-        - user: Ссылка на пользователя, получающего бонус.
-        - streak: Текущий стрик (количество дней подряд, когда пользователь получал бонус).
-        - max_streak: Максимальный достигнутый стрик.
-        - last_claim_date: Дата последнего получения бонуса.
-
-        Методы:
-        - __str__: Возвращает строковое представление бонуса.
-        """
-
+    Модель ежедневного бонуса и стрика.
+    """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="daily_bonus")
     streak = models.IntegerField(default=0)
-    last_claim_date = models.DateField(null=True, blank=True)
     max_streak = models.IntegerField(default=0)
+    last_claim_date = models.DateField(null=True, blank=True)
+    claimed_days = models.JSONField(default=dict)
+    streak_rewards = models.JSONField(default=dict)
 
     def __str__(self):
         return f"DailyBonus - User {self.user.telegram_id} - Streak {self.streak}"
+
+    def process_daily_bonus(self):
+        """
+        Начисляет ежедневный бонус и обновляет стрик.
+        """
+        today = now().date()
+        if self.last_claim_date == today:
+            return
+
+        if self.last_claim_date == today - timedelta(days=1):
+            self.streak += 1
+        else:
+            self.streak = 1
+
+        self.max_streak = max(self.max_streak, self.streak)
+        self.last_claim_date = today
+
+        bonus = 0.05 * 100
+        self.user.points += bonus
+        self.claimed_days[str(today)] = {"coinsEarned": bonus, "bonusReceived": True}
+        self.user.save()
+        self.save()
+
+    def process_streak_reward(self):
+        """
+        Начисляет бонус за стрик каждые 5 дней.
+        """
+        milestones = [5, 10, 15]
+        rewards = self.streak_rewards
+        for milestone in milestones:
+            if self.streak >= milestone and str(milestone) not in rewards:
+                self.user.upgrade_points += 1
+                rewards[str(milestone)] = True
+                self.user.save()
+        self.streak_rewards = rewards
+        self.save()
+
+    def reset_streak(self):
+        """
+        Сбрасывает стрик и связанные данные, если пользователь пропустил день.
+        """
+        today = now().date()
+        if self.last_claim_date != today - timedelta(days=1):
+            self.streak = 0
+            self.claimed_days = {}
+            self.streak_rewards = {}
+            self.save()
 
 
 class Referral(models.Model):
@@ -163,30 +222,42 @@ class Referral(models.Model):
 
 class Task(models.Model):
     """
-    Модель задания пользователя, представляющая информацию о конкретном задании.
-
-    Поля:
-    - user: Ссылка на пользователя, которому принадлежит задание.
-    - name: Название задания.
-    - description: Описание задания (опционально).
-    - is_completed: Флаг, указывающий, выполнено ли задание.
-    - reward: Награда за выполнение задания (по умолчанию 0).
-
-    Методы:
-    - __str__: Возвращает строковое представление задания в формате:
-      "Task <name> - User <telegram_id>".
+    Модель задания для всех пользователей.
     """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="tasks")
-    name = models.CharField(max_length=255)
-    description = models.TextField(null=True, blank=True)
-    is_completed = models.BooleanField(default=False)
-    reward = models.FloatField(default=0)
+    TASK_TYPES = [
+        ('daily', 'Ежедневное'),
+        ('challenge', 'Челлендж'),
+    ]
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    name = models.CharField(max_length=255, help_text="Название задания")
+    description = models.TextField(null=True, blank=True, help_text="Описание задания")
+    reward = models.FloatField(default=0, help_text="Награда за выполнение задания")
+    difficulty = models.IntegerField(default=1, help_text="Сложность задания (1-легко, 3-сложно)")
+    task_type = models.CharField(
+        max_length=20,
+        choices=TASK_TYPES,
+        default='daily',
+        help_text="Тип задания (ежедневное, челлендж)"
+    )
+    start_date = models.DateField(null=True, blank=True, help_text="Дата начала действия задания")
+    end_date = models.DateField(null=True, blank=True, help_text="Дата окончания действия задания")
+    is_active = models.BooleanField(default=True, help_text="Активно ли задание")
+    created_at = models.DateTimeField(auto_now_add=True, help_text="Дата создания задания")
+    updated_at = models.DateTimeField(auto_now=True, help_text="Дата последнего обновления")
 
     def __str__(self):
-        return f"Task {self.name} - User {self.user.telegram_id}"
+        return f"Task {self.name} - Type: {self.task_type}"
 
+    @property
+    def is_available(self):
+        """
+        Проверяет, активно ли задание на текущую дату.
+        """
+        today = now().date()
+        return self.is_active and (
+            (self.start_date is None or self.start_date <= today) and
+            (self.end_date is None or self.end_date >= today)
+        )
 
 
 class Statistics(models.Model):
@@ -255,3 +326,10 @@ class Donation(models.Model):
 
     def __str__(self):
         return f"Donation - User {self.user.telegram_id}, Stars: {self.stars_bought}"
+
+
+class GlobalStatistics(models.Model):
+    total_steps = models.IntegerField(default=0)
+    total_distance = models.FloatField(default=0)
+    total_rewards = models.FloatField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)

@@ -26,16 +26,10 @@ class WalkAdmin(admin.ModelAdmin):
     list_filter = ('is_valid', 'is_lucky_walk', 'start_time')
     ordering = ('-start_time',)
 
-
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    """
-    Администрирование модели задач.
-    """
-    list_display = ('name', 'user', 'is_completed', 'reward', 'created_at')
-    search_fields = ('name', 'user__telegram_id')
-    list_filter = ('is_completed',)
-    ordering = ('-created_at',)
+    list_display = ('id', 'name', 'task_type', 'is_active', 'start_date', 'end_date')
+    list_filter = ('task_type', 'is_active')
 
 
 @admin.register(Statistics)
