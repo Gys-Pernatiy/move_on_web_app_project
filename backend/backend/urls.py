@@ -20,7 +20,7 @@ from django.views.generic import TemplateView
 from backend import settings
 from django.conf.urls.static import static
 from move_on.views import get_energy, tasks_complete, WalkViewSet, get_statistics, log_js_errors, check_unfinished, \
-    main_page, get_tasks, stepometer, claim_daily_bonus, streak_history, global_statistics, top_referrals
+    main_page, get_tasks, stepometer, claim_daily_bonus, streak_history, global_statistics, user_top_referrals
 from rest_framework.routers import DefaultRouter
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -58,7 +58,7 @@ urlpatterns = [
     path('docs.<str:format>', schema_view.without_ui(cache_timeout=0), name='schema-formatted'),
     path('webapp-test/', TemplateView.as_view(template_name='webapp_test.html')),
     path('api/walk/check_unfinished/', check_unfinished, name='check_unfinished'),
-    path('api/top-referrals/<int:telegram_id>/', top_referrals, name='top-referrals'),
+    path('api/top-referrals/<int:telegram_id>/', user_top_referrals, name='user-top-referrals'),
     path('log_js_errors/', log_js_errors, name='js_logs_view'),
 ]
 
