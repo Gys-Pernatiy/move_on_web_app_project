@@ -1,6 +1,9 @@
 from django.contrib import admin
 from .models import User, Walk, Task, Statistics, DailyBonus, Referral, WalkSession, AnomalyLog, Donation
-
+from django.contrib.auth.models import Group, User as US
+from django_celery_beat.models import (
+    ClockedSchedule, CrontabSchedule, IntervalSchedule, PeriodicTask, SolarSchedule
+)
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
@@ -90,3 +93,13 @@ class DonationAdmin(admin.ModelAdmin):
     list_display = ('user', 'stars_bought', 'amount_paid', 'created_at')
     search_fields = ('user__telegram_id',)
     ordering = ('-created_at',)
+
+
+admin.site.unregister(Group)
+admin.site.unregister(US)
+
+admin.site.unregister(ClockedSchedule)
+admin.site.unregister(CrontabSchedule)
+admin.site.unregister(IntervalSchedule)
+admin.site.unregister(PeriodicTask)
+admin.site.unregister(SolarSchedule)
