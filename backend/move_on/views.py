@@ -3,7 +3,7 @@ import logging
 from datetime import datetime, timedelta
 from math import radians, sin, cos, sqrt, atan2
 
-from django.db.models import Window, F
+from django.db.models import Window, F, Count, Sum
 from django.db.models.functions import Rank
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, render
@@ -21,7 +21,7 @@ from django.utils.timezone import now
 from scipy.signal import butter, filtfilt, find_peaks
 import numpy as np
 from haversine import haversine, Unit
-from .utils import calculate_reward, butter_lowpass_filter, detect_steps, calculate_distance
+from .utils import *
 
 logger = logging.getLogger(__name__)
 
@@ -34,12 +34,12 @@ class WalkViewSet(ViewSet):
         data = request.data
         telegram_id = data.get('telegram_id')
         user = get_object_or_404(User, telegram_id=telegram_id)
-        user.update_energy()
 
+        user.update_energy()
         if user.energy < user.max_energy:
             return Response({"error": "Энергия должна быть полной для начала прогулки"}, status=400)
 
-        WalkSession.objects.filter(user=user).delete()
+        WalkSession.objects.filter(user=user).delete()  # Удаляем предыдущую сессию
         walk_session = WalkSession.objects.create(user=user)
 
         return Response({
@@ -52,122 +52,116 @@ class WalkViewSet(ViewSet):
         """
         Обновление данных прогулки.
         """
+        data = request.data
+        walk_id = data.get("walk_id")
+        acc_x = data.get("accX")
+        acc_y = data.get("accY")
+        acc_z = data.get("accZ")
+        latitude = data.get("latitude")
+        longitude = data.get("longitude")
+        speed_from_gps = data.get("speed", 0)
+        logger.info(f"Received accX: {acc_x}, accY: {acc_y}, accZ: {acc_z}")
+        logger.info(f"Received latitude: {latitude}, longitude: {longitude}, speed: {speed_from_gps}")
+
+        if not walk_id:
+            logger.info("walk_id is required")
+            return Response({"error": "walk_id is required"}, status=400)
+
+        if any(param is None for param in [acc_x, acc_y, acc_z, latitude, longitude]):
+            logger.info("Incomplete data provided")
+            return Response({"error": "Incomplete data provided"}, status=400)
+
         try:
-            data = request.data
-            walk_id = data.get("walk_id")
-            acc_x = data.get("accX", 0)
-            acc_y = data.get("accY", 0)
-            acc_z = data.get("accZ", 0)
-            latitude = data.get("latitude")
-            longitude = data.get("longitude")
-            speed = data.get("speed", 0)
-
-            logger.info(f"Запрос: {data}")
-
-            if not walk_id:
-                return Response({"error": "walk_id is required"}, status=400)
-
             walk_session = WalkSession.objects.get(id=walk_id)
             user = walk_session.user
 
-            # Проверка времени последнего обновления
-            elapsed_since_last_step = (
-                        now() - walk_session.last_step_time).total_seconds() if walk_session.last_step_time else 0
-
-            if elapsed_since_last_step > 600:  # 10 минут
-                walk_session.is_interrupted = True
-                walk_session.save()
-                self.finish(request, pk=walk_session.id)
-                return Response({"message": "Прогулка автоматически завершена из-за отсутствия данных."})
-
-            # Проверка энергии пользователя
+            # Проверяем энергию пользователя
             user.update_energy()
             if user.energy <= 0:
                 walk_session.is_interrupted = True
                 walk_session.save()
-                self.finish(request, pk=walk_session.id)
-                return Response({"message": "Прогулка автоматически завершена из-за окончания энергии."})
+                return self.finish(request, pk=walk_session.id)
 
-            # Обновление данных прогулки
-            magnitude = sqrt(acc_x ** 2 + acc_y ** 2 + acc_z ** 2)
-            walk_session.data_window.append(magnitude)
+            # Расчёт шагов
+            if acc_x is not None and acc_y is not None and acc_z is not None:
+                acceleration_data = [{"x": acc_x, "y": acc_y, "z": acc_z}]
+                steps = calculate_steps(acceleration_data)
+                walk_session.steps += steps
 
-            if len(walk_session.data_window) > 100:
-                walk_session.data_window.pop(0)
-
-            smoothed_data = butter_lowpass_filter(walk_session.data_window)
-            step_count = detect_steps(smoothed_data)
-            walk_session.steps = max(walk_session.steps, step_count)
-
+            # Расчёт дистанции
             if latitude is not None and longitude is not None:
                 if walk_session.last_latitude and walk_session.last_longitude:
-                    distance = calculate_distance(
-                        walk_session.last_latitude,
-                        walk_session.last_longitude,
-                        latitude,
-                        longitude,
-                    )
-                    if 2 < distance < 50 and speed < 20:
+                    prev_coords = (walk_session.last_latitude, walk_session.last_longitude)
+                    current_coords = (latitude, longitude)
+
+                    distance = calculate_speed_from_gps(prev_coords, current_coords, 1)  # delta_time=1 секунда
+                    if 2 < distance < 50:  # Ограничение выбросов
                         walk_session.distance += distance
 
                 walk_session.last_latitude = latitude
                 walk_session.last_longitude = longitude
 
-            elapsed_time = (now() - walk_session.start_time).total_seconds()
-            walk_session.avg_speed = (
-                walk_session.distance / elapsed_time if elapsed_time > 0 else 0
-            )
+            # Обновление скорости и времени
+            delta_time = (
+                datetime.now() - walk_session.last_step_time).total_seconds() if walk_session.last_step_time else 1
+            current_speed = speed_from_gps or calculate_speed(acceleration_data, delta_time)
+            walk_session.last_step_time = datetime.now()
 
-            walk_session.last_step_time = now()
+            # Средняя скорость
+            elapsed_time = (datetime.now() - walk_session.start_time).total_seconds()
+            walk_session.avg_speed = walk_session.distance / elapsed_time if elapsed_time > 0 else 0
+
             walk_session.save()
 
-            response_data = {
+            return Response({
                 "steps": walk_session.steps,
                 "distance": round(walk_session.distance, 2),
-                "current_speed": round(speed, 2),
-                "average_speed": round(walk_session.avg_speed, 2),
-            }
-            logger.info(f"Ответ: {response_data}")
-            return Response(response_data)
+                "current_speed": round(current_speed, 2),
+                "average_speed": round(walk_session.avg_speed, 2)
+            })
 
         except WalkSession.DoesNotExist:
-            logger.error("Ошибка: Сессия прогулки не найдена")
             return Response({"error": "Walk session not found"}, status=404)
         except Exception as e:
-            logger.error(f"Ошибка сервера: {e}")
             return Response({"error": str(e)}, status=500)
-
-    def retrieve(self, request, pk=None):
-        """
-        Получение информации о прогулке.
-        """
-        walk = get_object_or_404(Walk, id=pk)
-        serializer = WalkSerializer(walk)
-        return Response(serializer.data)
 
     def finish(self, request, pk=None):
         """
         Завершение прогулки.
         """
-        walk_session = get_object_or_404(WalkSession, id=pk)
-        reward = calculate_reward(walk_session.distance, walk_session.steps, walk_session.avg_speed, walk_session.user)
+        try:
+            walk_session = WalkSession.objects.get(id=pk)
+            reward = calculate_reward(
+                distance_km=walk_session.distance / 1000,
+                steps=walk_session.steps,
+                avg_speed_kmh=walk_session.avg_speed * 3.6,  # Конвертируем м/с в км/ч
+                daily_streak=walk_session.user.daily_streak,
+                endurance_level=walk_session.user.endurance_level,
+                efficiency_level=walk_session.user.efficiency_level,
+                luck_level=walk_session.user.luck_level,
+            )
 
-        Walk.objects.create(
-            user=walk_session.user,
-            start_time=walk_session.start_time,
-            end_time=now(),
-            steps=walk_session.steps,
-            distance=walk_session.distance,
-            avg_speed=walk_session.avg_speed,
-            reward=reward,
-        )
+            Walk.objects.create(
+                user=walk_session.user,
+                start_time=walk_session.start_time,
+                end_time=now(),
+                steps=walk_session.steps,
+                distance=walk_session.distance,
+                avg_speed=walk_session.avg_speed,
+                reward=reward,
+            )
 
-        walk_session.delete()
+            walk_session.delete()
 
-        return Response({
-            "message": "Прогулка завершена",
-            "reward": reward
-        })
+            return Response({
+                "message": "Прогулка завершена",
+                "reward": reward
+            })
+
+        except WalkSession.DoesNotExist:
+            return Response({"error": "Walk session not found"}, status=404)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
 
 
 @csrf_exempt
@@ -839,4 +833,73 @@ def global_statistics(request, telegram_id):
     return Response({
         "top_users": list(top_users),
         "current_user_position": current_user
+    })
+
+
+@swagger_auto_schema(
+    method='get',
+    operation_description="Возвращает топ пользователей по количеству приглашённых рефералов и их очкам, а также статистику текущего пользователя.",
+    responses={
+        200: openapi.Response(
+            description="Топ пользователей и данные текущего пользователя.",
+            schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'top_referrals': openapi.Schema(
+                        type=openapi.TYPE_ARRAY,
+                        description="Топ-10 пользователей по количеству приглашённых рефералов.",
+                        items=openapi.Schema(
+                            type=openapi.TYPE_OBJECT,
+                            properties={
+                                'username': openapi.Schema(type=openapi.TYPE_STRING, description="Имя пользователя."),
+                                'referral_count': openapi.Schema(type=openapi.TYPE_INTEGER, description="Количество приглашённых рефералов."),
+                                'referral_points': openapi.Schema(type=openapi.TYPE_NUMBER, description="Сумма очков всех рефералов."),
+                            }
+                        )
+                    ),
+                    'current_user': openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        description="Статистика текущего пользователя по рефералам.",
+                        properties={
+                            'referral_count': openapi.Schema(type=openapi.TYPE_INTEGER, description="Количество приглашённых рефералов."),
+                            'referral_points': openapi.Schema(type=openapi.TYPE_NUMBER, description="Сумма очков всех рефералов."),
+                        }
+                    )
+                }
+            )
+        ),
+        404: openapi.Response(description="Пользователь не найден."),
+        500: openapi.Response(description="Ошибка сервера.")
+    }
+)
+@api_view(['GET'])
+def top_referrals(request, telegram_id):
+    """
+    Возвращает топ пользователей по количеству приглашенных рефералов и их очкам.
+    """
+    user = get_object_or_404(User, telegram_id=telegram_id)
+
+    top_users = User.objects.annotate(
+        referral_count=Count('referrals'),
+        referral_points=Sum('referrals__points')
+    ).order_by('-referral_count')[:10]
+
+    user_referrals = user.referrals.all().aggregate(
+        total_count=Count('id'),
+        total_points=Sum('points')
+    )
+
+    return Response({
+        "top_referrals": [
+            {
+                "username": u.username,
+                "referral_count": u.referral_count,
+                "referral_points": u.referral_points
+            }
+            for u in top_users
+        ],
+        "current_user": {
+            "referral_count": user_referrals["total_count"] or 0,
+            "referral_points": user_referrals["total_points"] or 0
+        }
     })

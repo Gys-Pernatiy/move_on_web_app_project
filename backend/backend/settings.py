@@ -31,6 +31,8 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = bool(os.environ.get('DEBUG'))
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(',')
+TELEGRAM_LOG_BOT_TOKEN = str(os.environ.get('TELEGRAM_LOG_BOT_TOKEN'))
+TELEGRAM_LOG_CHAT_ID = int(os.environ.get('TELEGRAM_LOG_CHAT_ID'))
 
 
 # Application definition
@@ -166,30 +168,44 @@ REST_FRAMEWORK = {
 }
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
         },
     },
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+        "telegram": {
+            "level": "ERROR",
+            "class": "utils.telegram_logger.TelegramHandler",
+            "bot_token": TELEGRAM_LOG_BOT_TOKEN,
+            "chat_id": TELEGRAM_LOG_CHAT_ID,
+            "formatter": "verbose",
         },
     },
-    'root': {
-        'handlers': ['console'],
-        'level': 'DEBUG',
+    "loggers": {
+        "django": {
+            "handlers": ["console", "telegram"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
     },
 }
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://921a-5-35-46-240.ngrok-free.app/webapp-test/',
-    'https://921a-5-35-46-240.ngrok-free.app',
+    'https://b65c-77-91-74-111.ngrok-free.app/webapp-test/',
+    'https://b65c-77-91-74-111.ngrok-free.app',
 ]
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0'

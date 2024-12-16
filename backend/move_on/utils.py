@@ -1,66 +1,104 @@
-import random
-from scipy.signal import butter, filtfilt, find_peaks
-from haversine import haversine, Unit
 import numpy as np
+from scipy.signal import find_peaks
+from geopy.distance import geodesic
 
 
-def calculate_reward(distance, steps, avg_speed, user):
+def calculate_steps(acceleration_data, threshold=1.2):
     """
-    Расчёт награды за прогулку.
-
-    Аргументы:
-    - distance: Пройденная дистанция (км).
-    - steps: Количество шагов.
-    - avg_speed: Средняя скорость (км/ч).
-    - user: Экземпляр пользователя для учёта его навыков и бонусов.
-
-    Возвращает:
-    - Общую награду с учётом всех факторов.
+    Расчёт количества шагов на основе данных акселерометра.
+    :param acceleration_data: Список значений ускорений [{'x': ..., 'y': ..., 'z': ...}, ...].
+    :param threshold: Порог для определения шага.
+    :return: Количество шагов.
     """
-    # Основные множители
-    distance_factor = distance * 10
-    step_factor = steps / 100
-    speed_factor = 1 if 5 <= avg_speed <= 12 else 0.7
+    magnitudes = [
+        np.sqrt(data['x']**2 + data['y']**2 + data['z']**2) for data in acceleration_data
+    ]
+    peaks, _ = find_peaks(magnitudes, height=threshold)
+    return len(peaks)
 
-    # Дополнительные бонусы
-    efficiency_bonus = 1 + (user.efficiency_level * 0.3)  # 30% за уровень эффективности
-    endurance_bonus = 1 + (user.endurance_level * 0.6)  # 60% за уровень выносливости
-    streak_bonus = 1 + (user.daily_streak * 0.05)  # 5% за день стрика, максимум x2
-    streak_bonus = min(streak_bonus, 2)  # Ограничение стрика
 
-    # Базовая награда
-    base_reward = (distance_factor + step_factor) * speed_factor
+def calculate_distance(steps, step_length=0.75):
+    """
+    Расчёт дистанции на основе количества шагов.
+    :param steps: Количество шагов.
+    :param step_length: Длина одного шага (в метрах), по умолчанию 0.75 м.
+    :return: Пройденная дистанция (в метрах).
+    """
+    return steps * step_length
 
-    # Учитываем все бонусы
-    total_reward = base_reward * efficiency_bonus * endurance_bonus * streak_bonus
 
-    # Удачная прогулка
-    luck_chance = user.luck_level * 5  # 5% за уровень удачи
-    if random.randint(1, 100) <= luck_chance:  # Если выпадет удача
-        total_reward *= random.choice([1.5, 2])  # Умножаем на x1.5 или x2
+def calculate_speed(acceleration_data, delta_time):
+    """
+    Расчёт скорости на основе данных акселерометра.
+    :param acceleration_data: Список значений ускорений [{'x': ..., 'y': ..., 'z': ...}, ...].
+    :param delta_time: Время между измерениями (в секундах).
+    :return: Средняя скорость (в м/с).
+    """
+    magnitudes = [
+        np.sqrt(data['x']**2 + data['y']**2 + data['z']**2) for data in acceleration_data
+    ]
+    # Убираем гравитацию (~9.81 м/с²) из ускорений
+    adjusted_magnitudes = [max(0, mag - 9.81) for mag in magnitudes]
+    # Интегрируем ускорение по времени, чтобы получить скорость
+    speed = sum(adjusted_magnitudes) * delta_time / len(acceleration_data)
+    return speed
+
+
+def calculate_speed_from_gps(prev_coords, current_coords, delta_time):
+    """
+    Расчёт скорости на основе GPS-координат.
+    :param prev_coords: Предыдущие координаты (широта, долгота) в формате (lat, lon).
+    :param current_coords: Текущие координаты (широта, долгота) в формате (lat, lon).
+    :param delta_time: Время между измерениями (в секундах).
+    :return: Скорость (в м/с).
+    """
+    distance = geodesic(prev_coords, current_coords).meters  # Дистанция в метрах
+    speed = distance / delta_time if delta_time > 0 else 0
+    return speed
+
+
+def calculate_reward(distance_km, steps, avg_speed_kmh, daily_streak, endurance_level, efficiency_level, luck_level):
+    """
+    Рассчитывает итоговую награду за прогулку.
+
+    :param distance_km: Дистанция (в километрах).
+    :param steps: Количество шагов.
+    :param avg_speed_kmh: Средняя скорость (в км/ч).
+    :param daily_streak: Дней в ежедневном стрике.
+    :param endurance_level: Уровень выносливости (в процентах).
+    :param efficiency_level: Уровень эффективности (в процентах).
+    :param luck_level: Уровень удачи.
+    :return: Итоговая награда.
+    """
+
+    # Длительность прогулки (в условных единицах, отобразим как пример)
+    walk_duration = 10  # Это фиксировано в таблице как пример
+
+    # Фактор средней скорости (1 при 5-12 км/ч, 0.7 при 1-4 км/ч, 0.7 при 13-20 км/ч)
+    if 5 <= avg_speed_kmh <= 12:
+        speed_factor = 1
+    elif 1 <= avg_speed_kmh < 5 or 13 <= avg_speed_kmh <= 20:
+        speed_factor = 0.7
+    else:
+        speed_factor = 0  # Слишком медленно или слишком быстро
+
+    # Ежедневный множитель
+    daily_multiplier = min(1 + daily_streak * 0.2, 2)  # До 5+ дней максимум х2
+
+    # Бонус выносливости (60% за уровень)
+    endurance_bonus = endurance_level * 0.6
+
+    # Множитель эффективности (30% за уровень)
+    efficiency_multiplier = 1 + efficiency_level * 0.3
+
+    # Шанс удачи (5% базовый, +2% за уровень удачи)
+    luck_chance = 5 + luck_level * 2
+
+    # Итоговая награда
+    base_reward = (distance_km * 10 + steps / 100) * speed_factor
+    reward_with_multipliers = base_reward * daily_multiplier * efficiency_multiplier
+    luck_bonus = reward_with_multipliers * (luck_chance / 100)
+
+    total_reward = reward_with_multipliers + luck_bonus + endurance_bonus
 
     return round(total_reward, 2)
-
-
-def calculate_distance(lat1, lon1, lat2, lon2):
-    return haversine((lat1, lon1), (lat2, lon2), unit=Unit.METERS)
-
-# Фильтр скользящего среднего нашёл на аутсорсе
-def moving_average(data, window_size=5):
-    if len(data) < window_size:
-        return []
-    return [sum(data[i:i+window_size]) / window_size for i in range(len(data) - window_size + 1)]
-
-
-def butter_lowpass_filter(data, cutoff=3.0, fs=50.0, order=4):
-    nyquist = 0.5 * fs
-    normal_cutoff = cutoff / nyquist
-    b, a = butter(order, normal_cutoff, btype='low', analog=False)
-    return filtfilt(b, a, data)
-
-
-def detect_steps(data, min_freq=0.5, max_freq=3.0, sampling_rate=50):
-    threshold = np.std(data) * 1.5
-    min_distance = int(sampling_rate / max_freq)
-    peaks, _ = find_peaks(data, height=threshold, distance=min_distance)
-    return len(peaks)

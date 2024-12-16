@@ -20,7 +20,7 @@ from django.views.generic import TemplateView
 from backend import settings
 from django.conf.urls.static import static
 from move_on.views import get_energy, tasks_complete, WalkViewSet, get_statistics, log_js_errors, check_unfinished, \
-    main_page, get_tasks, stepometer, claim_daily_bonus, streak_history, global_statistics
+    main_page, get_tasks, stepometer, claim_daily_bonus, streak_history, global_statistics, top_referrals
 from rest_framework.routers import DefaultRouter
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -44,6 +44,8 @@ router.register(r'walks', WalkViewSet, basename='walk')
 urlpatterns = [
     path('', main_page, name='main_page'),
     path('admin/', admin.site.urls),
+    path('walks/<int:pk>/finish/', WalkViewSet.as_view({'post': 'finish'}), name='walk_finish'),
+    path('walks/<int:pk>/update/', WalkViewSet.as_view({'post': 'update'}), name='walk_update'),
     path('energy/<int:telegram_id>/', get_energy, name='get_energy'),
     path('tasks/', get_tasks, name='get_tasks'),
     path('tasks/<int:task_id>/complete/', tasks_complete, name='tasks_complete'),
@@ -51,11 +53,12 @@ urlpatterns = [
     path('bonus/claim/<int:telegram_id>/', claim_daily_bonus, name='claim_daily_bonus'),
     # path('stepometer/', stepometer, name='stepometer'),
     path('statistics/<int:telegram_id>/', get_statistics, name='get_statistics'),
-    path('global-statistics/<int:telegram_id>/', global_statistics, name='global_statistics'),
+    # path('global-statistics/<int:telegram_id>/', global_statistics, name='global_statistics'),
     path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('docs.<str:format>', schema_view.without_ui(cache_timeout=0), name='schema-formatted'),
     path('webapp-test/', TemplateView.as_view(template_name='webapp_test.html')),
     path('api/walk/check_unfinished/', check_unfinished, name='check_unfinished'),
+    path('api/top-referrals/<int:telegram_id>/', top_referrals, name='top-referrals'),
     path('log_js_errors/', log_js_errors, name='js_logs_view'),
 ]
 

@@ -1,7 +1,7 @@
 import uuid
 from datetime import timedelta
-
 from django.db import models
+from django.db.models import Sum
 from django.utils.timezone import now
 
 
@@ -89,6 +89,14 @@ class User(models.Model):
             self.energy = min(100, self.energy + restored_energy)
             self.last_energy_update = now_time
             self.save()
+
+    @property
+    def referral_count(self):
+        return self.referrals.count()
+
+    @property
+    def referral_points(self):
+        return self.referrals.aggregate(total_points=Sum('points'))['total_points'] or 0
 
 class Walk(models.Model):
     """
@@ -214,6 +222,8 @@ class Referral(models.Model):
     reward_percentage = models.FloatField(default=5)
     total_rewards = models.FloatField(default=0)
     total_invited = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
 
     def __str__(self):
         return f"Referral - User {self.user.telegram_id} invited by {self.invited_by.telegram_id if self.invited_by else ''}"
