@@ -16,9 +16,11 @@ class TelegramHandler(logging.Handler):
             log_entry = self.format(record)
             payload = {
                 "chat_id": self.chat_id,
-                "text": f"🔴 *Django Error Log:*\n\n```\n{log_entry}\n```",
-                "parse_mode": "Markdown"
+                "text": f"🔴 <b>Django Error Log:</b>\n<pre>{log_entry}</pre>",
+                "parse_mode": "HTML"
             }
-            requests.post(self.url, json=payload)
+            response = requests.post(self.url, json=payload)
+            if not response.ok:
+                print(f"Ошибка отправки лога в Telegram: {response.text}")
         except Exception as e:
             print(f"Ошибка отправки лога в Telegram: {e}")

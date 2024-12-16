@@ -188,10 +188,12 @@ LOGGING = {
         },
         "telegram": {
             "level": "ERROR",
-            "class": "utils.telegram_logger.TelegramHandler",
-            "bot_token": TELEGRAM_LOG_BOT_TOKEN,
-            "chat_id": TELEGRAM_LOG_CHAT_ID,
+            "class": "move_on.telegram_logger.TelegramHandler",
             "formatter": "verbose",
+            "()": {
+                "bot_token": TELEGRAM_LOG_BOT_TOKEN,
+                "chat_id": TELEGRAM_LOG_CHAT_ID,
+            },
         },
     },
     "loggers": {
@@ -202,6 +204,7 @@ LOGGING = {
         },
     },
 }
+
 
 CSRF_TRUSTED_ORIGINS = [
     'https://b65c-77-91-74-111.ngrok-free.app/webapp-test/',
