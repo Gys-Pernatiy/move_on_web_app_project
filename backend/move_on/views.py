@@ -838,33 +838,26 @@ def global_statistics(request, telegram_id):
 
 @swagger_auto_schema(
     method='get',
-    operation_description="Возвращает топ пользователей по количеству приглашённых рефералов и их очкам, а также статистику текущего пользователя.",
+    operation_description="Возвращает топ рефералов текущего пользователя, отсортированных по очкам.",
     responses={
         200: openapi.Response(
-            description="Топ пользователей и данные текущего пользователя.",
+            description="Топ рефералов текущего пользователя.",
             schema=openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 properties={
-                    'top_referrals': openapi.Schema(
+                    'user_referrals': openapi.Schema(
                         type=openapi.TYPE_ARRAY,
-                        description="Топ-10 пользователей по количеству приглашённых рефералов.",
+                        description="Топ рефералов текущего пользователя.",
                         items=openapi.Schema(
                             type=openapi.TYPE_OBJECT,
                             properties={
                                 'username': openapi.Schema(type=openapi.TYPE_STRING, description="Имя пользователя."),
-                                'referral_count': openapi.Schema(type=openapi.TYPE_INTEGER, description="Количество приглашённых рефералов."),
-                                'referral_points': openapi.Schema(type=openapi.TYPE_NUMBER, description="Сумма очков всех рефералов."),
+                                'points': openapi.Schema(type=openapi.TYPE_INTEGER, description="Очки реферала."),
                             }
                         )
                     ),
-                    'current_user': openapi.Schema(
-                        type=openapi.TYPE_OBJECT,
-                        description="Статистика текущего пользователя по рефералам.",
-                        properties={
-                            'referral_count': openapi.Schema(type=openapi.TYPE_INTEGER, description="Количество приглашённых рефералов."),
-                            'referral_points': openapi.Schema(type=openapi.TYPE_NUMBER, description="Сумма очков всех рефералов."),
-                        }
-                    )
+                    'referral_count': openapi.Schema(type=openapi.TYPE_INTEGER, description="Количество рефералов пользователя."),
+                    'total_referral_points': openapi.Schema(type=openapi.TYPE_INTEGER, description="Сумма очков всех рефералов."),
                 }
             )
         ),
@@ -873,33 +866,26 @@ def global_statistics(request, telegram_id):
     }
 )
 @api_view(['GET'])
-def top_referrals(request, telegram_id):
+def user_top_referrals(request, telegram_id):
     """
-    Возвращает топ пользователей по количеству приглашенных рефералов и их очкам.
+    Возвращает топ рефералов текущего пользователя, отсортированных по очкам.
     """
     user = get_object_or_404(User, telegram_id=telegram_id)
+    user_referrals = user.referrals.all().order_by('-points')
 
-    top_users = User.objects.annotate(
-        referral_count=Count('referrals'),
-        referral_points=Sum('referrals__points')
-    ).order_by('-referral_count')[:10]
-
-    user_referrals = user.referrals.all().aggregate(
-        total_count=Count('id'),
+    referral_stats = user_referrals.aggregate(
+        referral_count=Count('id'),
         total_points=Sum('points')
     )
 
     return Response({
-        "top_referrals": [
+        "user_referrals": [
             {
-                "username": u.username,
-                "referral_count": u.referral_count,
-                "referral_points": u.referral_points
+                "username": referral.username,
+                "points": referral.points
             }
-            for u in top_users
+            for referral in user_referrals
         ],
-        "current_user": {
-            "referral_count": user_referrals["total_count"] or 0,
-            "referral_points": user_referrals["total_points"] or 0
-        }
+        "referral_count": referral_stats['referral_count'] or 0,
+        "total_referral_points": referral_stats['total_points'] or 0,
     })
