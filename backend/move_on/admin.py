@@ -72,14 +72,14 @@ class WalkSessionAdmin(admin.ModelAdmin):
     ordering = ('-start_time',)
 
 
-@admin.register(AnomalyLog)
-class AnomalyLogAdmin(admin.ModelAdmin):
-    """
-    Администрирование модели логов аномалий.
-    """
-    list_display = ('user', 'description', 'created_at')
-    search_fields = ('user__telegram_id',)
-    ordering = ('-created_at',)
+# @admin.register(AnomalyLog)
+# class AnomalyLogAdmin(admin.ModelAdmin):
+#     """
+#     Администрирование модели логов аномалий.
+#     """
+#     list_display = ('user', 'description', 'created_at')
+#     search_fields = ('user__telegram_id',)
+#     ordering = ('-created_at',)
 
 
 @admin.register(Donation)
