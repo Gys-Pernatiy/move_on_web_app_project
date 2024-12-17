@@ -98,9 +98,13 @@ class DonationAdmin(admin.ModelAdmin):
 admin.site.unregister(Group)
 admin.site.unregister(US)
 
+if admin.site.is_registered(CrontabSchedule):
+    admin.site.unregister(CrontabSchedule)
 if admin.site.is_registered(ClockedSchedule):
     admin.site.unregister(ClockedSchedule)
-admin.site.unregister(CrontabSchedule)
-admin.site.unregister(IntervalSchedule)
-admin.site.unregister(PeriodicTask)
-admin.site.unregister(SolarSchedule)
+if admin.site.is_registered(IntervalSchedule):
+    admin.site.unregister(IntervalSchedule)
+if admin.site.is_registered(PeriodicTask):
+    admin.site.unregister(PeriodicTask)
+if admin.site.is_registered(SolarSchedule):
+    admin.site.unregister(SolarSchedule)
