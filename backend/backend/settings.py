@@ -33,7 +33,7 @@ DEBUG = bool(os.environ.get('DEBUG'))
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(',')
 TELEGRAM_LOG_BOT_TOKEN = str(os.environ.get('TELEGRAM_LOG_BOT_TOKEN'))
 TELEGRAM_LOG_CHAT_ID = int(os.environ.get('TELEGRAM_LOG_CHAT_ID'))
-
+NGROK_URL = os.environ.get('NGROK_URL')
 
 # Application definition
 
@@ -197,7 +197,7 @@ LOGGING = {
     "loggers": {
         "django": {
             "handlers": ["console", "telegram"],
-            "level": "DEBUG",
+            "level": "INFO",
             "propagate": True,
         },
     },
@@ -206,8 +206,8 @@ LOGGING = {
 
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://b65c-77-91-74-111.ngrok-free.app/webapp-test/',
-    'https://b65c-77-91-74-111.ngrok-free.app',
+    f'{NGROK_URL}/webapp-test/',
+    f'{NGROK_URL}',
 ]
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0'

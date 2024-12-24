@@ -256,3 +256,4 @@ docs/_build/
 /backend/move_on/migrations/0006_globalstatistics_alter_dailybonus_claimed_days.py
 /backend/test_report.txt
 /test_report.txt
+/backend/move_on/static/18-12-1_34.js

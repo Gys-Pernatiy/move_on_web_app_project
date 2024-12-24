@@ -14,6 +14,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 from .models import User, Walk, Task, WalkSession, Referral, Statistics
 from .serializers import UserSerializer, WalkSerializer, TaskSerializer, CompleteTaskSerializer
@@ -27,6 +28,42 @@ logger = logging.getLogger(__name__)
 
 
 class WalkViewSet(ViewSet):
+    @swagger_auto_schema(
+        method='post',
+        operation_description="Запускает новую прогулку для пользователя.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['telegram_id'],
+            properties={
+                'telegram_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='Telegram ID пользователя'),
+            },
+        ),
+        responses={
+            200: openapi.Response(
+                description="Прогулка успешно начата",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'walk_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID новой прогулки'),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING, description='Сообщение о запуске прогулки'),
+                        'start_time': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME,
+                                                     description='Время старта прогулки'),
+                    },
+                ),
+            ),
+            400: openapi.Response(
+                description="Энергия недостаточна для начала прогулки",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'error': openapi.Schema(type=openapi.TYPE_STRING, description='Сообщение об ошибке'),
+                    },
+                ),
+            ),
+            404: "Пользователь не найден",
+            500: "Ошибка сервера",
+        }
+    )
     def create(self, request):
         """
         Запуск прогулки.
@@ -39,7 +76,7 @@ class WalkViewSet(ViewSet):
         if user.energy < user.max_energy:
             return Response({"error": "Энергия должна быть полной для начала прогулки"}, status=400)
 
-        WalkSession.objects.filter(user=user).delete()  # Удаляем предыдущую сессию
+        WalkSession.objects.filter(user=user).delete()
         walk_session = WalkSession.objects.create(user=user)
 
         return Response({
@@ -48,6 +85,40 @@ class WalkViewSet(ViewSet):
             "start_time": walk_session.start_time.isoformat()
         })
 
+    @swagger_auto_schema(
+        method='put',
+        operation_description="Обновляет данные текущей прогулки.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['walk_id', 'accX', 'accY', 'accZ', 'latitude', 'longitude'],
+            properties={
+                'walk_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID текущей прогулки'),
+                'accX': openapi.Schema(type=openapi.TYPE_NUMBER, description='Ускорение по оси X'),
+                'accY': openapi.Schema(type=openapi.TYPE_NUMBER, description='Ускорение по оси Y'),
+                'accZ': openapi.Schema(type=openapi.TYPE_NUMBER, description='Ускорение по оси Z'),
+                'latitude': openapi.Schema(type=openapi.TYPE_NUMBER, description='Широта пользователя'),
+                'longitude': openapi.Schema(type=openapi.TYPE_NUMBER, description='Долгота пользователя'),
+                'speed': openapi.Schema(type=openapi.TYPE_NUMBER, description='Скорость пользователя (опционально)'),
+            },
+        ),
+        responses={
+            200: openapi.Response(
+                description="Обновленные данные прогулки",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'steps': openapi.Schema(type=openapi.TYPE_INTEGER, description='Обновленные шаги'),
+                        'distance': openapi.Schema(type=openapi.TYPE_NUMBER, description='Пройденная дистанция'),
+                        'current_speed': openapi.Schema(type=openapi.TYPE_NUMBER, description='Текущая скорость'),
+                        'average_speed': openapi.Schema(type=openapi.TYPE_NUMBER, description='Средняя скорость'),
+                    },
+                ),
+            ),
+            400: "Недостаточно данных для обновления прогулки",
+            404: "Прогулка не найдена",
+            500: "Ошибка сервера",
+        }
+    )
     def update(self, request, pk=None):
         """
         Обновление данных прогулки.
@@ -62,6 +133,8 @@ class WalkViewSet(ViewSet):
         speed_from_gps = data.get("speed", 0)
         logger.info(f"Received accX: {acc_x}, accY: {acc_y}, accZ: {acc_z}")
         logger.info(f"Received latitude: {latitude}, longitude: {longitude}, speed: {speed_from_gps}")
+        if latitude == 0 and longitude == 0:
+            logger.info("Default coordinates received. GPS may not be available.")
 
         if not walk_id:
             logger.info("walk_id is required")
@@ -75,39 +148,34 @@ class WalkViewSet(ViewSet):
             walk_session = WalkSession.objects.get(id=walk_id)
             user = walk_session.user
 
-            # Проверяем энергию пользователя
             user.update_energy()
             if user.energy <= 0:
                 walk_session.is_interrupted = True
                 walk_session.save()
                 return self.finish(request, pk=walk_session.id)
 
-            # Расчёт шагов
             if acc_x is not None and acc_y is not None and acc_z is not None:
                 acceleration_data = [{"x": acc_x, "y": acc_y, "z": acc_z}]
                 steps = calculate_steps(acceleration_data)
                 walk_session.steps += steps
 
-            # Расчёт дистанции
             if latitude is not None and longitude is not None:
                 if walk_session.last_latitude and walk_session.last_longitude:
                     prev_coords = (walk_session.last_latitude, walk_session.last_longitude)
                     current_coords = (latitude, longitude)
 
-                    distance = calculate_speed_from_gps(prev_coords, current_coords, 1)  # delta_time=1 секунда
-                    if 2 < distance < 50:  # Ограничение выбросов
+                    distance = calculate_speed_from_gps(prev_coords, current_coords, 1)
+                    if 2 < distance < 50:
                         walk_session.distance += distance
 
                 walk_session.last_latitude = latitude
                 walk_session.last_longitude = longitude
 
-            # Обновление скорости и времени
             delta_time = (
                 datetime.now() - walk_session.last_step_time).total_seconds() if walk_session.last_step_time else 1
             current_speed = speed_from_gps or calculate_speed(acceleration_data, delta_time)
             walk_session.last_step_time = datetime.now()
 
-            # Средняя скорость
             elapsed_time = (datetime.now() - walk_session.start_time).total_seconds()
             walk_session.avg_speed = walk_session.distance / elapsed_time if elapsed_time > 0 else 0
 
@@ -125,6 +193,25 @@ class WalkViewSet(ViewSet):
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
+    @swagger_auto_schema(
+        method='post',
+        operation_description="Завершает текущую прогулку и рассчитывает награду.",
+        responses={
+            200: openapi.Response(
+                description="Прогулка завершена успешно",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'message': openapi.Schema(type=openapi.TYPE_STRING,
+                                                  description='Сообщение об успешном завершении прогулки'),
+                        'reward': openapi.Schema(type=openapi.TYPE_NUMBER, description='Начисленная награда'),
+                    },
+                ),
+            ),
+            404: "Прогулка не найдена",
+            500: "Ошибка сервера",
+        }
+    )
     def finish(self, request, pk=None):
         """
         Завершение прогулки.
@@ -134,7 +221,7 @@ class WalkViewSet(ViewSet):
             reward = calculate_reward(
                 distance_km=walk_session.distance / 1000,
                 steps=walk_session.steps,
-                avg_speed_kmh=walk_session.avg_speed * 3.6,  # Конвертируем м/с в км/ч
+                avg_speed_kmh=walk_session.avg_speed * 3.6,
                 daily_streak=walk_session.user.daily_streak,
                 endurance_level=walk_session.user.endurance_level,
                 efficiency_level=walk_session.user.efficiency_level,
@@ -164,20 +251,17 @@ class WalkViewSet(ViewSet):
             return Response({"error": str(e)}, status=500)
 
 
-@csrf_exempt
-def log_js_errors(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            log_message = data.get('message', 'No message provided')
-            logger.info(f"JS LOG: {log_message}")
-            with open("js_errors.log", "a", encoding="utf-8") as f:
-                f.write(f"{log_message}\n")
-            return JsonResponse({"status": "success", "message": "Log received"})
-        except Exception as e:
-            logger.error(f"Error logging JS messages: {e}")
-            return JsonResponse({"status": "error", "message": str(e)}, status=500)
-    return JsonResponse({"status": "error", "message": "Invalid request method"}, status=405)
+class LogView(APIView):
+    """
+    Получает логи с фронтенда и выводит их в консоль.
+    """
+    def post(self, request, *args, **kwargs):
+        level = request.data.get("level", "info")
+        message = request.data.get("message", "No message provided")
+        user_id = request.data.get("user_id", "Unknown User")
+
+        print(f"[{level.upper()}] User: {user_id} - {message}")
+        return Response({"status": "log received"}, status=status.HTTP_200_OK)
 
 
 def update_data(request):
