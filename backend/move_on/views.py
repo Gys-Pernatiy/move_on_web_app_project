@@ -487,7 +487,7 @@ def get_statistics(request, telegram_id):
 
 
 @swagger_auto_schema(
-    method='get',
+    methods=['get'],
     operation_description="Возвращает историю стрика пользователя за последние 15 дней.",
     responses={
         200: openapi.Response(
@@ -561,7 +561,7 @@ def streak_history(request, telegram_id):
 
 
 @swagger_auto_schema(
-    method='post',
+    methods=['post'],
     operation_description="Начисляет ежедневный бонус пользователю.",
     responses={
         200: openapi.Response(
@@ -632,7 +632,7 @@ def get_streak_status(request, telegram_id):
 
 
 @swagger_auto_schema(
-    method='get',
+    methods=['get'],
     operation_description="Проверяет наличие незавершённых прогулок.",
     responses={
         200: openapi.Response(
@@ -703,7 +703,7 @@ def lucky_throw(request):
 
 
 @swagger_auto_schema(
-    method='get',
+    methods=['get'],
     operation_description="Возвращает текущие данные шагомера пользователя.",
     responses={
         200: openapi.Response(
@@ -799,7 +799,7 @@ def main_page(request):
 
 
 @swagger_auto_schema(
-    method='get',
+    methods=['get'],
     operation_description="Возвращает список всех активных заданий с возможностью фильтрации по типу задачи.",
     manual_parameters=[
         openapi.Parameter(
@@ -849,7 +849,7 @@ def get_tasks(request):
 
 
 @swagger_auto_schema(
-    method='get',
+    methods=['get'],
     operation_description="Возвращает глобальную статистику пользователей, включая топ-100 и позицию текущего пользователя.",
     manual_parameters=[
         openapi.Parameter(
@@ -911,7 +911,7 @@ def global_statistics(request, telegram_id):
 
 
 @swagger_auto_schema(
-    method='get',
+    methods=['get'],
     operation_description="Возвращает топ рефералов текущего пользователя, отсортированных по очкам.",
     responses={
         200: openapi.Response(
