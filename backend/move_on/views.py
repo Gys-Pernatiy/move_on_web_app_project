@@ -29,40 +29,33 @@ logger = logging.getLogger(__name__)
 
 class WalkViewSet(ViewSet):
     @swagger_auto_schema(
-        method='post',
-        operation_description="Запускает новую прогулку для пользователя.",
+        operation_description="Запуск прогулки.",
+        method='post',  # Указывает, что это для POST-запроса
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             required=['telegram_id'],
             properties={
-                'telegram_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='Telegram ID пользователя'),
+                'telegram_id': openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description='Telegram ID пользователя'
+                ),
             },
         ),
         responses={
             200: openapi.Response(
-                description="Прогулка успешно начата",
+                description="Прогулка начата",
                 schema=openapi.Schema(
                     type=openapi.TYPE_OBJECT,
                     properties={
-                        'walk_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID новой прогулки'),
-                        'message': openapi.Schema(type=openapi.TYPE_STRING, description='Сообщение о запуске прогулки'),
-                        'start_time': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME,
-                                                     description='Время старта прогулки'),
+                        'walk_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING),
+                        'start_time': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
                     },
                 ),
             ),
-            400: openapi.Response(
-                description="Энергия недостаточна для начала прогулки",
-                schema=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        'error': openapi.Schema(type=openapi.TYPE_STRING, description='Сообщение об ошибке'),
-                    },
-                ),
-            ),
-            404: "Пользователь не найден",
-            500: "Ошибка сервера",
-        }
+            400: openapi.Response(description="Ошибка, энергия недостаточна"),
+            404: openapi.Response(description="Пользователь не найден"),
+        },
     )
     def create(self, request):
         """
@@ -86,38 +79,37 @@ class WalkViewSet(ViewSet):
         })
 
     @swagger_auto_schema(
-        method='put',
-        operation_description="Обновляет данные текущей прогулки.",
+        operation_description="Обновление данных прогулки.",
+        method='put',  # Указывает, что это для PUT-запроса
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             required=['walk_id', 'accX', 'accY', 'accZ', 'latitude', 'longitude'],
             properties={
-                'walk_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID текущей прогулки'),
+                'walk_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='ID прогулки'),
                 'accX': openapi.Schema(type=openapi.TYPE_NUMBER, description='Ускорение по оси X'),
                 'accY': openapi.Schema(type=openapi.TYPE_NUMBER, description='Ускорение по оси Y'),
                 'accZ': openapi.Schema(type=openapi.TYPE_NUMBER, description='Ускорение по оси Z'),
-                'latitude': openapi.Schema(type=openapi.TYPE_NUMBER, description='Широта пользователя'),
-                'longitude': openapi.Schema(type=openapi.TYPE_NUMBER, description='Долгота пользователя'),
-                'speed': openapi.Schema(type=openapi.TYPE_NUMBER, description='Скорость пользователя (опционально)'),
+                'latitude': openapi.Schema(type=openapi.TYPE_NUMBER, description='Широта'),
+                'longitude': openapi.Schema(type=openapi.TYPE_NUMBER, description='Долгота'),
+                'speed': openapi.Schema(type=openapi.TYPE_NUMBER, description='Скорость'),
             },
         ),
         responses={
             200: openapi.Response(
-                description="Обновленные данные прогулки",
+                description="Данные прогулки обновлены",
                 schema=openapi.Schema(
                     type=openapi.TYPE_OBJECT,
                     properties={
-                        'steps': openapi.Schema(type=openapi.TYPE_INTEGER, description='Обновленные шаги'),
-                        'distance': openapi.Schema(type=openapi.TYPE_NUMBER, description='Пройденная дистанция'),
-                        'current_speed': openapi.Schema(type=openapi.TYPE_NUMBER, description='Текущая скорость'),
-                        'average_speed': openapi.Schema(type=openapi.TYPE_NUMBER, description='Средняя скорость'),
+                        'steps': openapi.Schema(type=openapi.TYPE_INTEGER),
+                        'distance': openapi.Schema(type=openapi.TYPE_NUMBER),
+                        'current_speed': openapi.Schema(type=openapi.TYPE_NUMBER),
+                        'average_speed': openapi.Schema(type=openapi.TYPE_NUMBER),
                     },
                 ),
             ),
-            400: "Недостаточно данных для обновления прогулки",
-            404: "Прогулка не найдена",
-            500: "Ошибка сервера",
-        }
+            400: openapi.Response(description="Недостаточно данных"),
+            404: openapi.Response(description="Прогулка не найдена"),
+        },
     )
     def update(self, request, pk=None):
         """
@@ -194,23 +186,21 @@ class WalkViewSet(ViewSet):
             return Response({"error": str(e)}, status=500)
 
     @swagger_auto_schema(
+        operation_description="Завершение прогулки.",
         method='post',
-        operation_description="Завершает текущую прогулку и рассчитывает награду.",
         responses={
             200: openapi.Response(
-                description="Прогулка завершена успешно",
+                description="Прогулка завершена",
                 schema=openapi.Schema(
                     type=openapi.TYPE_OBJECT,
                     properties={
-                        'message': openapi.Schema(type=openapi.TYPE_STRING,
-                                                  description='Сообщение об успешном завершении прогулки'),
-                        'reward': openapi.Schema(type=openapi.TYPE_NUMBER, description='Начисленная награда'),
+                        'message': openapi.Schema(type=openapi.TYPE_STRING),
+                        'reward': openapi.Schema(type=openapi.TYPE_NUMBER),
                     },
                 ),
             ),
-            404: "Прогулка не найдена",
-            500: "Ошибка сервера",
-        }
+            404: openapi.Response(description="Прогулка не найдена"),
+        },
     )
     def finish(self, request, pk=None):
         """
