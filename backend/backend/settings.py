@@ -205,10 +205,10 @@ LOGGING = {
 
 
 
-CSRF_TRUSTED_ORIGINS = [
-    f'{NGROK_URL}/webapp-test/',
-    f'{NGROK_URL}',
-]
+# CSRF_TRUSTED_ORIGINS = [
+#     f'{NGROK_URL}/webapp-test/',
+#     f'{NGROK_URL}',
+# ]
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
