@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 class WalkViewSet(ViewSet):
     @swagger_auto_schema(
         operation_description="Запуск прогулки.",
-        methods=['post'],
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             required=['telegram_id'],
@@ -80,7 +79,6 @@ class WalkViewSet(ViewSet):
 
     @swagger_auto_schema(
         operation_description="Обновление данных прогулки.",
-        methods=['put'],
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             required=['walk_id', 'accX', 'accY', 'accZ', 'latitude', 'longitude'],
@@ -187,7 +185,6 @@ class WalkViewSet(ViewSet):
 
     @swagger_auto_schema(
         operation_description="Завершение прогулки.",
-        methods=['post'],
         responses={
             200: openapi.Response(
                 description="Прогулка завершена",
