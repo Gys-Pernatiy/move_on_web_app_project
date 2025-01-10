@@ -24,7 +24,7 @@ import numpy as np
 from haversine import haversine, Unit
 from .utils import *
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("move_on")
 
 
 class WalkViewSet(ViewSet):
@@ -60,10 +60,11 @@ class WalkViewSet(ViewSet):
         """
         Запуск прогулки.
         """
+        logger.info("Received data:", request.data)
+
         data = request.data
         telegram_id = data.get('telegram_id')
         user = get_object_or_404(User, telegram_id=telegram_id)
-
         user.update_energy()
         if user.energy < user.max_energy:
             return Response({"error": "Энергия должна быть полной для начала прогулки"}, status=400)
@@ -113,6 +114,7 @@ class WalkViewSet(ViewSet):
         """
         Обновление данных прогулки.
         """
+        logger.info("Updating walk data...")
         data = request.data
         walk_id = data.get("walk_id")
         acc_x = data.get("accX")
@@ -181,6 +183,7 @@ class WalkViewSet(ViewSet):
         except WalkSession.DoesNotExist:
             return Response({"error": "Walk session not found"}, status=404)
         except Exception as e:
+            logger.error(f"Error updating walk session: {str(e)}", exc_info=True)
             return Response({"error": str(e)}, status=500)
 
     @swagger_auto_schema(
@@ -960,3 +963,7 @@ def user_top_referrals(request, telegram_id):
         "referral_count": referral_stats['referral_count'] or 0,
         "total_referral_points": referral_stats['total_points'] or 0,
     })
+
+
+def home(request):
+    return render(request, 'index.html')

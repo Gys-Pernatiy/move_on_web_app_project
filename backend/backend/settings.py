@@ -48,9 +48,12 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_yasg',
     'django_celery_beat',
+    'corsheaders',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -152,7 +155,14 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
+CORS_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:8000",
+    "https://4fab-185-231-69-112.ngrok-free.app",
+]
+CSRF_TRUSTED_ORIGINS = [
+    "https://4fab-185-231-69-112.ngrok-free.app",
+]
+APPEND_SLASH = False
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.openapi.AutoSchema',
@@ -182,26 +192,31 @@ LOGGING = {
     },
     "handlers": {
         "console": {
-            "level": "DEBUG",
+            "level": "INFO",
             "class": "logging.StreamHandler",
             "formatter": "simple",
-        },
-        "telegram": {
-            "level": "ERROR",
-            "class": "move_on.telegram_logger.TelegramHandler",
-            "bot_token": TELEGRAM_LOG_BOT_TOKEN,
-            "chat_id": TELEGRAM_LOG_CHAT_ID,
-            "formatter": "verbose",
         },
     },
     "loggers": {
         "django": {
-            "handlers": ["console", "telegram"],
+            "handlers": ["console"],
             "level": "INFO",
             "propagate": True,
         },
+        "django.db.backends": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "move_on": {  # Добавляем логгер для приложения move_on
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
 }
+
+
 
 
 
