@@ -162,7 +162,7 @@ CORS_ALLOWED_ORIGINS = [
 CSRF_TRUSTED_ORIGINS = [
     "https://4fab-185-231-69-112.ngrok-free.app",
 ]
-APPEND_SLASH = False
+APPEND_SLASH = True
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.openapi.AutoSchema',
