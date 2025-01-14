@@ -64,19 +64,25 @@ class WalkViewSet(ViewSet):
 
         data = request.data
         telegram_id = data.get('telegram_id')
-        user = get_object_or_404(User, telegram_id=telegram_id)
-        user.update_energy()
-        if user.energy < user.max_energy:
-            return Response({"error": "Энергия должна быть полной для начала прогулки"}, status=400)
+        try:
+            if not telegram_id:
+                return Response({"error": "Telegram ID не передан"}, status=400)
+            user = get_object_or_404(User, telegram_id=telegram_id)
+            user.update_energy()
+            if user.energy < user.max_energy:
+                return Response({"error": "Энергия должна быть полной для начала прогулки"}, status=400)
 
-        WalkSession.objects.filter(user=user).delete()
-        walk_session = WalkSession.objects.create(user=user)
+            WalkSession.objects.filter(user=user).delete()
+            walk_session = WalkSession.objects.create(user=user)
 
-        return Response({
-            "walk_id": walk_session.id,
-            "message": "Прогулка начата",
-            "start_time": walk_session.start_time.isoformat()
-        })
+            return Response({
+                "walk_id": walk_session.id,
+                "message": "Прогулка начата",
+                "start_time": walk_session.start_time.isoformat()
+            }, status=201)
+        except Exception as e:
+            logger.error(f"Error while starting walk: {e}", exc_info=True)
+            return Response({"error": "Internal server error"}, status=500)
 
     @swagger_auto_schema(
         operation_description="Обновление данных прогулки.",

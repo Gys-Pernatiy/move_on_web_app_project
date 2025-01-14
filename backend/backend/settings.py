@@ -156,12 +156,15 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:8000",
-    "https://4fab-185-231-69-112.ngrok-free.app",
+    "https://urmanta-mini-app.netlify.app",
+    "https://stride-mini-app.site",
 ]
+
 CSRF_TRUSTED_ORIGINS = [
-    "https://4fab-185-231-69-112.ngrok-free.app",
+    "https://urmanta-mini-app.netlify.app",
+    "https://stride-mini-app.site",
 ]
+
 APPEND_SLASH = False
 
 REST_FRAMEWORK = {
@@ -200,7 +203,7 @@ LOGGING = {
     "loggers": {
         "django": {
             "handlers": ["console"],
-            "level": "ERROR",
+            "level": "DEBUG",
             "propagate": True,
         },
         "django.db.backends": {
