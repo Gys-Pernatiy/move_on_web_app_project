@@ -192,7 +192,7 @@ LOGGING = {
     },
     "handlers": {
         "console": {
-            "level": "INFO",
+            "level": "ERROR",
             "class": "logging.StreamHandler",
             "formatter": "simple",
         },
@@ -200,7 +200,7 @@ LOGGING = {
     "loggers": {
         "django": {
             "handlers": ["console"],
-            "level": "INFO",
+            "level": "ERROR",
             "propagate": True,
         },
         "django.db.backends": {
@@ -210,7 +210,7 @@ LOGGING = {
         },
         "move_on": {  # Добавляем логгер для приложения move_on
             "handlers": ["console"],
-            "level": "INFO",
+            "level": "ERROR",
             "propagate": False,
         },
     },
