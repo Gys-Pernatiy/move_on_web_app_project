@@ -213,7 +213,7 @@ LOGGING = {
         },
         "move_on": {  # Добавляем логгер для приложения move_on
             "handlers": ["console"],
-            "level": "ERROR",
+            "level": "DEBUG",
             "propagate": False,
         },
     },
