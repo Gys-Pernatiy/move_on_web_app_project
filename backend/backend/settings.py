@@ -167,7 +167,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://www.stride-mini-app.site",
     "https://urmanta-mini-app.netlify.app"
 ]
-CORS_ALLOW_CREDENTIALS = True
+# CORS_ALLOW_CREDENTIALS = True
 
 APPEND_SLASH = False
 
