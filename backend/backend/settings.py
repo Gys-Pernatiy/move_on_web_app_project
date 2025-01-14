@@ -156,14 +156,18 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
-    "https://urmanta-mini-app.netlify.app",
     "https://stride-mini-app.site",
+    "https://www.stride-mini-app.site",
+    "https://urmanta-mini-app.netlify.app"
 ]
 
+
 CSRF_TRUSTED_ORIGINS = [
-    "https://urmanta-mini-app.netlify.app",
     "https://stride-mini-app.site",
+    "https://www.stride-mini-app.site",
+    "https://urmanta-mini-app.netlify.app"
 ]
+CORS_ALLOW_CREDENTIALS = True
 
 APPEND_SLASH = False
 
@@ -195,7 +199,7 @@ LOGGING = {
     },
     "handlers": {
         "console": {
-            "level": "ERROR",
+            "level": "DEBUG",  # Установлен уровень DEBUG
             "class": "logging.StreamHandler",
             "formatter": "simple",
         },
@@ -203,21 +207,22 @@ LOGGING = {
     "loggers": {
         "django": {
             "handlers": ["console"],
-            "level": "DEBUG",
-            "propagate": True,
+            "level": "DEBUG",  # Установлен уровень DEBUG
+            "propagate": False,  # Прекращаем передачу логов другим хендлерам
         },
         "django.db.backends": {
             "handlers": ["console"],
             "level": "ERROR",
             "propagate": False,
         },
-        "move_on": {  # Добавляем логгер для приложения move_on
+        "move_on": {
             "handlers": ["console"],
             "level": "DEBUG",
             "propagate": False,
         },
     },
 }
+
 
 
 
