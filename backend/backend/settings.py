@@ -36,7 +36,7 @@ TELEGRAM_LOG_CHAT_ID = int(os.environ.get('TELEGRAM_LOG_CHAT_ID'))
 NGROK_URL = os.environ.get('NGROK_URL')
 
 # Application definition
-
+print(ALLOWED_HOSTS)
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -162,7 +162,7 @@ CORS_ALLOWED_ORIGINS = [
 CSRF_TRUSTED_ORIGINS = [
     "https://4fab-185-231-69-112.ngrok-free.app",
 ]
-APPEND_SLASH = True
+APPEND_SLASH = False
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.openapi.AutoSchema',
