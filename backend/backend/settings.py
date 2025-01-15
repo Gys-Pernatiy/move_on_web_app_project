@@ -189,15 +189,11 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            "format": "{levelname} {asctime} {module} {message} [method: {request.method}, path: {request.path}]",
-            "style": "{",
-        },
-
-        "simple": {
-            "format": "{levelname} {message}",
+            "format": "{levelname} {asctime} {module} {message} [request: {request}]",
             "style": "{",
         },
     },
+
     "handlers": {
         "console": {
             "level": "INFO",  # Логирование от уровня INFO и выше
