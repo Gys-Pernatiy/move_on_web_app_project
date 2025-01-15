@@ -189,9 +189,10 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            "format": "{levelname} {asctime} {module} {message}",
+            "format": "{levelname} {asctime} {module} {message} [method: {request.method}, path: {request.path}]",
             "style": "{",
         },
+
         "simple": {
             "format": "{levelname} {message}",
             "style": "{",
@@ -199,28 +200,40 @@ LOGGING = {
     },
     "handlers": {
         "console": {
-            "level": "DEBUG",  # Установлен уровень DEBUG
+            "level": "INFO",  # Логирование от уровня INFO и выше
             "class": "logging.StreamHandler",
-            "formatter": "simple",
+            "formatter": "verbose",
+        },
+        "error_console": {
+            "level": "ERROR",  # Только ошибки
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
         },
     },
+
     "loggers": {
         "django": {
-            "handlers": ["console"],
-            "level": "DEBUG",  # Установлен уровень DEBUG
-            "propagate": False,  # Прекращаем передачу логов другим хендлерам
+            "handlers": ["console", "error_console"],
+            "level": "INFO",
+            "propagate": False,
         },
-        "django.db.backends": {
-            "handlers": ["console"],
-            "level": "ERROR",
+        "django.request": {
+            "handlers": ["console", "error_console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.server": {
+            "handlers": ["console", "error_console"],
+            "level": "INFO",
             "propagate": False,
         },
         "move_on": {
-            "handlers": ["console"],
-            "level": "DEBUG",
+            "handlers": ["console", "error_console"],
+            "level": "INFO",
             "propagate": False,
         },
     },
+
 }
 
 
