@@ -196,12 +196,12 @@ LOGGING = {
 
     "handlers": {
         "console": {
-            "level": "INFO",  # Логирование от уровня INFO и выше
+            "level": "INFO",
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
         "error_console": {
-            "level": "ERROR",  # Только ошибки
+            "level": "ERROR",
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
