@@ -258,3 +258,4 @@ docs/_build/
 /test_report.txt
 /backend/move_on/static/18-12-1_34.js
 /server.yml
+/backend/entrypoint.sh

@@ -41,7 +41,6 @@ schema_view = get_schema_view(
 router = DefaultRouter()
 router.register(r'walks', WalkViewSet, basename='walk')
 
-
 urlpatterns = [
     # path('', main_page, name='main_page'),
     path('', home, name='home'),
@@ -66,5 +65,5 @@ urlpatterns = [
 
 urlpatterns += router.urls
 print(f'URLS: {urlpatterns}')
-if settings.DEBUG:
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+# if settings.DEBUG:
+#     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
