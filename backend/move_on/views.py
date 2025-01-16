@@ -67,8 +67,12 @@ class WalkViewSet(ViewSet):
         try:
             if not telegram_id:
                 return Response({"error": "Telegram ID не передан"}, status=400)
-            user = get_object_or_404(User, telegram_id=telegram_id)
-            user.update_energy()
+            # user = get_object_or_404(User, telegram_id=telegram_id)
+            # user.update_energy()
+            user, created = User.objects.get_or_create(telegram_id=telegram_id)
+            if created:
+                user.save()
+
             if user.energy < user.max_energy:
                 return Response({"error": "Энергия должна быть полной для начала прогулки"}, status=400)
 

@@ -259,3 +259,5 @@ docs/_build/
 /backend/move_on/static/18-12-1_34.js
 /server.yml
 /backend/entrypoint.sh
+ssl
+/ssl.txt
