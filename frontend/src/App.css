@@ -1,0 +1,197 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('./assets/fonts/SF-Pro-Display-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('./assets/fonts/SF-Pro-Display-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('./assets/fonts/SF-Pro-Display-Bold.woff2') format('woff2');
+    font-weight: bold;
+    font-style: normal;
+}
+
+:root {
+    /* Base theme colors */
+    --bg-color: #000000;
+    --secondary-bg-color: #1a1a1a;
+    --tertiary-bg-color: #1b242c;
+    --border-color: #252525;
+
+    /* Text colors */
+    --text-color: #ffffff;
+    --hint-color: #8c8c8c;
+    --link-color: #2481cc;
+
+    /* Brand colors */
+    --button-color: #29b7da; 
+    /* #34bbdd  */
+    --button-text-color: #000;
+    --coin-color: #FFD700;
+
+    /* Overlay colors */
+    --overlay-light: rgba(77, 208, 225, 0.1);
+    --overlay-lighter: rgba(77, 208, 225, 0.05);
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --button-shadow: rgba(77, 208, 225, 0.4);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+        Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+}
+
+#root {
+  height: 100%; /* Устанавливаем высоту для корневых элементов */
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+html, body, #root {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+.App {
+    text-align: center;
+    min-height: 100vh;
+    padding-bottom: 80px; /* Space for fixed navigation */
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    box-sizing: border-box;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.page {
+    padding: 1.5rem 1rem;
+    max-width: 800px;
+    margin: 0 auto;
+    animation: fadeIn 0.3s ease-in-out;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1 {
+    color: var(--text-color);
+    font-family: 'Orbitron', sans-serif;
+    margin-bottom: 1.5rem;
+    font-size: 2.5rem;
+    font-weight: 600;
+}
+
+.deck {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.card {
+    width: 100px;
+    height: 100px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.card.flipped {
+    transform: rotateY(180deg);
+}
+
+.card.show {
+    background-color: var(--button-color);
+}
+
+.info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    font-size: 1.2rem;
+}
+
+.game-over {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 2;
+}
+
+.game-over h2 {
+    margin: 0 0 10px 0;
+}
+
+.game-over button {
+    background-color: #ff6347;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.game-over button:hover {
+    background-color: #ff4500;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

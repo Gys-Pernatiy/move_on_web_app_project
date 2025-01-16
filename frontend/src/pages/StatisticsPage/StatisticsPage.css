@@ -1,0 +1,114 @@
+.stats-block {
+    background-color: var(--secondary-bg-color);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 15px var(--shadow-color);
+    animation: fadeIn 0.3s ease-in-out;
+    width: 100%;
+    max-width: 600px;
+}
+
+.stats-block h2 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+
+.global-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    background-color: var(--tertiary-bg-color);
+    border-radius: 12px;
+    flex-direction: column;
+}
+
+.stat-value {
+    color: var(--text-color, #ffffff);
+    font-size: 1.1rem;
+    font-weight: 600;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.stat-label {
+    color: var(--button-color);
+    font-size: 0.9rem;
+}
+
+.personal-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.referral-list {
+    list-style: none;
+    padding: 0;
+}
+
+.referral-list-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 0 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 0.5rem;
+    color: var(--hint-color);
+    font-size: 0.9rem;
+}
+
+.referral-header-name, .referral-header-coins {
+    font-weight: 500;
+}
+
+.referral-header-name span {
+    font-family: 'Orbitron', sans-serif;
+}
+
+.referral-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 0;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.referral-item:last-child {
+    border-bottom: none;
+}
+
+.referral-name {
+    color: var(--text-color);
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.referral-coins {
+    color: var(--button-color);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.position-indicator {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: var(--overlay-light);
+    color: var(--button-color);
+    font-size: 0.8rem;
+    font-family: 'Orbitron', sans-serif;
+}

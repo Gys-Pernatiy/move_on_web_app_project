@@ -1,0 +1,8 @@
+.move-page {
+    padding: 2rem 1rem;
+    min-height: calc(100vh - 100px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: var(--bg-color, #121212);
+}

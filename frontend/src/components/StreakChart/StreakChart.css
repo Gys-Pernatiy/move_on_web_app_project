@@ -1,0 +1,113 @@
+.streak-chart-container {
+  width: 100%;
+  padding: 20px;
+  border-radius: 12px;
+  position: absolute;
+  bottom: 15%;
+}
+
+.streak-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+}
+
+.streak-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.streak-label {
+  font-size: 0.9rem;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+.streak-value {
+  font-size: 1.2rem;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.streak-value b {
+  font-family: 'Orbitron', sans-serif;
+}
+
+.streak-chart {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  height: 150px;
+  padding: 10px 0;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.streak-bar-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 3px;
+  height: 150px;
+  justify-content: flex-end;
+  position: relative;
+}
+
+.day-label {
+  position: absolute;
+  bottom: -20px;
+  font-size: 0.6rem;
+  color: var(--hint-color, #8c8c8c);
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.streak-bar {
+  width: 100%;
+  border-radius: 4px;
+  transition: height 0.3s ease;
+  min-height: 4px;
+}
+
+.streak-bar.earned {
+  background: var(--button-color, #34bbdd);
+}
+
+.streak-bar.not-earned {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.streak-coins {
+  font-size: 14px;
+  color: #fff;
+  margin-top: 4px;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 600;
+  position: absolute;
+  bottom: 5px;
+}
+
+.gift-icon {
+  color: #FFC107;
+  font-size: 10px;
+  position: absolute;
+  top: 60px;
+}
+
+.walking-icon {
+  margin-top: 8px;
+  color: var(--button-color, #34bbdd);
+  font-size: 16px;
+  position: absolute;
+  top: 100%;
+  left: 0;
+}
+
+.streak-chart-loading {
+  text-align: center;
+  padding: 20px;
+  color: #888;
+}

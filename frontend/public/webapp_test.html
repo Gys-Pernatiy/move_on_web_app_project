@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MoveOn Tracker</title>
+    <script src="https://telegram.org/js/telegram-web-app.js?56"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #111;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        #log {
+            max-height: 100px;
+            overflow-y: auto;
+            background: #333;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+<h1>MoveOn Tracker</h1>
+<button id="startButton">Start</button>
+<div id="log"></div>
+<div id="sensorData"></div>
+<script>
+const originalConsoleLog = console.log;
+const sendLogToBackend = (message) => {
+    // fetch('/logs/', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({ level: 'info', message }),
+    // });
+};
+console.log = (...args) => {
+    originalConsoleLog(...args);
+    sendLogToBackend(args.join(' '));
+};
+
+const logDiv = document.getElementById('log');
+const sensorDataDiv = document.getElementById('sensorData');
+const logMessage = (msg) => {
+    logDiv.innerHTML += `<div>${msg}</div>`;
+    logDiv.scrollTop = logDiv.scrollHeight;
+    console.log(msg);
+};
+const updateSensorDisplay = (data) => {
+    logMessage('updateSensorDisplay >>>> ', data);
+    sensorDataDiv.innerHTML = `
+        <div>Accelerometer: X=${data.acc.x}, Y=${data.acc.y}, Z=${data.acc.z}</div>
+        <div>Gyroscope: X=${data.gyro.x}, Y=${data.gyro.y}, Z=${data.gyro.z}</div>
+        <div>Location: Lat=${data.location.latitude}, Lon=${data.location.longitude}, Speed=${data.location.speed}</div>
+    `;
+};
+
+let walkId = null;
+let isTrackingActive = false;
+let sensors = { acc: { x: 0, y: 0, z: 0 }, gyro: { x: 0, y: 0, z: 0 }, location: { latitude: null, longitude: null, speed: null } };
+let dataInterval = null;
+
+const initializeTelegramWebApp = () => {
+    const webApp = window.Telegram.WebApp;
+    if (webApp?.initDataUnsafe?.user) {
+        logMessage(`User: ${webApp.initDataUnsafe.user.first_name}`);
+    }
+};
+
+const startSensors = () => {
+    updateSensorDisplay(sensors);
+    const { Accelerometer, Gyroscope, LocationManager } = Telegram.WebApp;
+
+    console.log('startSensors >>>>>>>>>>>> ');
+
+    if (Accelerometer) {
+        Accelerometer.start({ refresh_rate: 500 });
+        Telegram.WebApp.onEvent('accelerometerChanged', () => {
+            sensors.acc = { x: Accelerometer.x || 0, y: Accelerometer.y || 0, z: Accelerometer.z || 0 };
+            updateSensorDisplay(sensors);
+        });
+        logMessage("Accelerometer started.");
+    } else logMessage("Accelerometer not supported.");
+
+    if (Gyroscope) {
+        Gyroscope.start({ refresh_rate: 500 });
+        Telegram.WebApp.onEvent('gyroscopeChanged', () => {
+            sensors.gyro = { x: Gyroscope.x || 0, y: Gyroscope.y || 0, z: Gyroscope.z || 0 };
+            updateSensorDisplay(sensors);
+        });
+        logMessage("Gyroscope started.");
+    } else logMessage("Gyroscope not supported.");
+
+    if (LocationManager) {
+        console.log('LocationManager >>>> ', LocationManager);
+        LocationManager.init(() => {
+            logMessage("LocationManager initialized. Fetching location...");
+
+            const fetchLocation = () => {
+                LocationManager.getLocation((loc) => {
+                    if (loc && loc.latitude && loc.longitude && loc.speed >= 0) {
+                        sensors.location = {
+                            latitude: loc.latitude,
+                            longitude: loc.longitude,
+                            speed: loc.speed || 0,
+                        };
+                        logMessage(`Location received: Lat=${loc.latitude}, Lon=${loc.longitude}, Speed=${loc.speed}`);
+                        updateSensorDisplay(sensors);
+                    } else {
+                        logMessage("Invalid location data received. Retrying...");
+                        setTimeout(fetchLocation, 2000);
+                    }
+                });
+            };
+
+            fetchLocation();
+        });
+    } else {
+        logMessage("Location Manager not supported. Sending default location.");
+        sensors.location = { latitude: 0, longitude: 0, speed: 0 };
+    }
+};
+
+
+const sendSensorData = async () => {
+    try {
+        const latitude = sensors.location.latitude || 0;
+        const longitude = sensors.location.longitude || 0;
+        const speed = sensors.location.speed >= 0 ? sensors.location.speed : 0;
+
+        const payload = {
+            walk_id: walkId,
+            accX: sensors.acc.x,
+            accY: sensors.acc.y,
+            accZ: sensors.acc.z,
+            latitude: latitude,
+            longitude: longitude,
+            speed: speed,
+        };
+
+        logMessage("Sending data:", payload);
+        logMessage("sensors:", sensors);
+
+        // const response = await fetch(`/walks/${walkId}/update/`, {
+        //     method: "POST",
+        //     headers: { "Content-Type": "application/json" },
+        //     body: JSON.stringify(payload),
+        // });
+
+        // if (!response.ok) throw new Error(`Server error: ${response.status}`);
+        logMessage("Sensor data sent successfully.");
+    } catch (error) {
+        logMessage(`Error sending data: ${error.message}`);
+    }
+};
+
+
+const stopSensors = () => {
+    const { Accelerometer, Gyroscope } = Telegram.WebApp;
+    if (Accelerometer) Accelerometer.stop();
+    if (Gyroscope) Gyroscope.stop();
+};
+const startWalk = async () => {
+    if (isTrackingActive) return;
+    const userId = Telegram.WebApp?.initDataUnsafe?.user?.id || 'unknown';
+
+    try {
+        // const response = await fetch("/walks/", {
+        //     method: "POST",
+        //     headers: { "Content-Type": "application/json" },
+        //     body: JSON.stringify({ telegram_id: userId })
+        // });
+        // const data = await response.json();
+        // walkId = data.walk_id;
+        // logMessage(`Walk started. ID: ${walkId}`);
+
+        startSensors();
+        isTrackingActive = true;
+        dataInterval = setInterval(sendSensorData, 2000);
+    } catch (error) {
+        logMessage(`Error starting walk: ${error.message}`);
+    }
+};
+
+const stopWalk = async () => {
+    if (!isTrackingActive) return;
+
+    try {
+        // await fetch(`/walks/${walkId}/finish/`, { method: "POST" });
+        logMessage("Walk finished.");
+    } catch (error) {
+        logMessage(`Error finishing walk: ${error.message}`);
+    } finally {
+        stopSensors();
+        clearInterval(dataInterval);
+        isTrackingActive = false;
+        walkId = null;
+    }
+};
+
+document.getElementById("startButton").addEventListener("click", async () => {
+    const button = document.getElementById("startButton");
+    if (isTrackingActive) {
+        await stopWalk();
+        button.textContent = "Start";
+    } else {
+        await startWalk();
+        button.textContent = "Stop";
+    }
+});
+
+initializeTelegramWebApp();
+</script>
+</body>
+</html>

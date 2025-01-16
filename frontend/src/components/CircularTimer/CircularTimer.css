@@ -1,0 +1,181 @@
+.timer-container {
+    position: absolute;
+    top: 30%;
+    transform: translateY(-50%);
+}
+
+.circular-timer {
+    position: relative;
+    width: 350px;
+    height: 350px;
+    margin: 0 auto;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+    font-family: 'Orbitron', sans-serif;
+}
+
+.timer-background {
+    fill: none;
+    stroke-width: 4;
+    opacity: 0.8;
+}
+
+.timer-progress {
+    fill: none;
+    stroke: var(--button-color, #34bbdd);
+    stroke-width: 8;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    transition: stroke-dashoffset 0.3s ease;
+}
+
+.time-marker {
+    stroke: var(--button-color, #34bbdd);
+    stroke-width: 4;
+    stroke-linecap: round;
+}
+
+.timer-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: 100%;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.countdown {
+    font-size: 6rem;
+    font-weight: bold;
+    color: var(--text-color, #ffffff);
+    animation: pulse 1s infinite;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.start-button {
+    background-color: transparent;
+    color: var(--text-color, #ffffff);
+    border: none;
+    border-radius: 50%;
+    width: 325px;
+    height: 325px;
+    font-size: 3.8rem;
+    line-height: 5rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.start-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(77, 208, 225, 0.4);
+}
+
+.start-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.start-button svg {
+    height: 4rem;
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%)
+}
+
+.speed {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--text-color, #ffffff);
+    margin-bottom: 1rem;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.speed.invalid {
+    color: #ff0000;
+}
+
+.speed-value {
+    font-size: 4rem;
+    font-weight: bold;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.energy {
+    font-size: 1.2rem;
+    color: var(--text-color, #ffffff);
+    opacity: 0.8;
+    margin-bottom: 0.5rem;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.time-left {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text-color, #ffffff);
+    font-family: 'Orbitron', sans-serif;
+}
+
+.stop-button {
+    background-color: var(--button-color, #34bbdd);
+    border: 2px solid var(--button-color, #34bbdd);
+    color: var(--button-text-color, #000000);
+    border-radius: 40px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Orbitron', sans-serif;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.2rem;
+    width: 80px;
+    height: 80px;
+    font-weight: bold;
+}
+
+.stop-button:hover {
+    background-color: var(--button-color, #34bbdd);
+    color: var(--button-text-color);
+}
+
+.spark {
+    fill: var(--button-color, #34bbdd);
+    opacity: 0;
+}
+
+.spark-animation {
+    animation: sparkle 1s ease-out forwards;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes sparkle {
+    0% {
+        opacity: 0;
+        transform: scale(0);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.5);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0);
+    }
+}

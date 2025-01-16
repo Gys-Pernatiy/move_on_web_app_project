@@ -1,0 +1,28 @@
+.stride-coins {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, rgba(77, 208, 225, 0.2), rgba(77, 208, 225, 0.1));
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    color: var(--text-color, #ffffff);
+    font-family: 'Orbitron', sans-serif;
+    z-index: 1000;
+}
+
+.coins-icon {
+    color: #FFD700;
+    font-size: 1.2rem;
+    filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
+}
+
+.coins-amount {
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(77, 208, 225, 0.5);
+}
