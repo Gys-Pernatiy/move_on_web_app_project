@@ -261,3 +261,4 @@ docs/_build/
 /backend/entrypoint.sh
 ssl
 /ssl.txt
+/nginx/save.conf
